@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON to Tableau WDC with Authorization</title>
+
+    <script src="https://connectors.tableau.com/libs/tableauwdc-2.3.latest.js"></script>
+</head>
+<body>
+    <h1>JSON to Tableau Web Data Connector with Authorization</h1>
+    <div id="wdcDiv">
+        <p>Please click the button below to connect to Tableau.</p>
+        <button id="connectButton" onclick="startDataFetch()">Connect to Tableau</button>
+    </div>
+
+    <div id="tableauData">
+
+    </div>
+
+    <script>
+        // Define the Web Data Connector
+        var myConnector = tableau.makeConnector();
+
+        // Define the schema for Tableau
+        myConnector.getSchema = function (schemaCallback) {
+            var cols = [
+                {
+                    id: "city",
+                    dataType: tableau.dataTypeEnum.string,
+                },
+                {
+                    id: "count",
+                    dataType: tableau.dataTypeEnum.int,
+                },
+            ];
+
+            var tableInfo = {
+                id: "city_data",
+                alias: "City Data",
+                columns: cols,
+            };
+
+            schemaCallback([tableInfo]);
+        };
+
+        // Define the data fetching function
+        myConnector.getData = function (table, doneCallback) {
+            // Replace with your JSON data source URL
+            var dataUrl = "https://pirus.serveo.net/api/dukungan/report?uuid=8c1fba4f-7b5f-4dae-b4ef-dda4cdcfa671"; // Update with your API endpoint
+
+            // Replace 'YOUR_AUTH_TOKEN' with your actual authorization token
+            var authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTY5OTc0MDQsImlhdCI6MTY5NDQwNTQwNCwiaXNzIjoidGFuanVuZyIsInN1YiI6IkdhbGFuZyBEdWt1bmdhbiBMb2dpbiIsInVzZXIiOnsiYWxsb3dfc3ViX2NhbGVnIjpmYWxzZSwiYXBwX25hbWUiOiIiLCJjbGllbnRfaWQiOiIiLCJsZXZlbCI6IiIsIm5hbWUiOiJ0YW5qdW5nIiwicGhvbmVfbWFuZGF0b3J5IjpmYWxzZSwicGljdHVyZSI6IiIsInBpY3R1cmVfdGh1bWIiOiIiLCJyb2xlIjoibWFzdGVyIiwic3RhdHVzIjoiYWN0aXZlIiwic3ViX2NhbGVnIjoiIiwidGhlbWVfY29sb3IiOiIiLCJ0aGVtZV9sb2dvIjoiIiwidXNlcl9hZGRyZXNzIjp7InByb3ZpbnNpIjoiIiwia2FidXBhdGVuIjoiIiwia2VjYW1hdGFuIjoiIiwia2VsdXJhaGFuIjoiIiwiaWRfcHJvdmluc2kiOiIiLCJpZF9rYWJ1cGF0ZW4iOiIiLCJpZF9rZWNhbWF0YW4iOiIiLCJpZF9rZWx1cmFoYW4iOiIiLCJydCI6IiIsInJ3IjoiIiwic3RyZWV0IjoiIn0sInV1aWQiOiJiNjRmZmU1OC1lYmVkLTQ0NmYtOTMyNC0yMDAzNjNiOTAwY2EiLCJ3aWxheWFoIjpudWxsfX0.JuqMmWH4bJmwcwwN5dKu3Zh_6O2mGVwLapsSvykV3UA";
+
+            $.ajax({
+                url: dataUrl,
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + authToken,
+                },
+                dataType: "json",
+                success: function (data) {
+                    var tableData = [];
+
+                    // Convert JSON data into Tableau format
+                    for (var city in data) {
+                        tableData.push({
+                            "city": city,
+                            "count": data[city],
+                        });
+                    }
+
+                    table.appendRows(tableData);
+                    doneCallback();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching data:", error);
+                    doneCallback();
+                }
+            });
+        };
+
+        // Register the connector with Tableau
+        tableau.registerConnector(myConnector);
+
+        // Function to start data fetching
+        function startDataFetch() {
+            tableau.connectionName = "JSON Data Connector";
+            tableau.submit();
+        }
+    </script>
+</body>
+</html>
